@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Virtual IP/DHCP Simulator</title>
+</head>
+<body>
+  <h2>IANA IP Block Generator</h2>
+  <button onclick="generateIPBlock()">Generate IP Block</button>
+  <p id="ipBlock"></p>
+
+  <h3>Assign to RIR</h3>
+  <select id="rirSelector">
+    <option>APNIC (Asia)</option>
+    <option>ARIN (North America)</option>
+    <option>RIPE NCC (Europe)</option>
+    <option>LACNIC (Latin America)</option>
+    <option>AfriNIC (Africa)</option>
+  </select>
+  <button onclick="assignToRIR()">Assign Block</button>
+  <p id="rirAssignment"></p>
+
+  <h3>DHCP Server</h3>
+  <input type="text" id="deviceName" placeholder="Enter Device Name">
+  <button onclick="assignIP()">Assign IP</button>
+  <button onclick="releaseIP()">Release IP</button>
+  <pre id="dhcpList"></pre>
+
+  <script>
+    let currentBlock = '';
+    let ipPool = [];
+    let assignedIPs = {};
+
+    function generateIPBlock() {
+      let a = 10, b = 0, c = Math.floor(Math.random() * 256);
+      currentBlock = ${a}.${b}.${c}.0/24;
+      ipPool = [];
+      for (let i = 1; i < 255; i++) {
+        ipPool.push(${a}.${b}.${c}.${i});
+      }
+      document.getElementById("ipBlock").innerText = "Generated Block: " + currentBlock;
+    }
+
+    function assignToRIR() {
+      let rir = document.getElementById("rirSelector").value;
+      if (currentBlock === '') return alert("Pehle IP block generate karo.");
+      document.getElementById("rirAssignment").innerText = ${currentBlock} assigned to ${rir};
+    }
+
+    function assignIP() {
+      let name = document.getElementById("deviceName").value.trim();
+      if (!name) return alert("Device name daalo.");
+      if (assignedIPs[name]) return alert("Is device ko already IP mila hai.");
+      if (ipPool.length === 0) return alert("Koi IP available nahi hai.");
+      let ip = ipPool.shift();
+      assignedIPs[name] = ip;
+      updateDHCPList();
+    }
+
+    function releaseIP() {
+      let name = document.getElementById("deviceName").value.trim();
+      if (!assignedIPs[name]) return alert("Is device ke paas IP nahi hai.");
+      ipPool.push(assignedIPs[name]);
+      delete assignedIPs[name];
+      updateDHCPList();
+    }
+
+    function updateDHCPList() {
+      let output = "Assigned IPs:\n";
+      for (let device in assignedIPs) {
+        output += ${device} → ${assignedIPs[device]}\n;
+      }
+      document.getElementById("dhcpList").innerText = output;
+    }
+  </script>
+</body>
+</html>
